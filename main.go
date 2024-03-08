@@ -84,9 +84,13 @@ func setEnvVariable(key, value string) {
 	}
 }
 
-func main() {
-	for key, value := range readDotEnv(filterDotEnv(readCWD())) {
-		setEnvVariable(key, value)
-		log.Printf("os.Getenv(%v) = value(%v)", os.Getenv(key), value)
-	}
+func Load() {
+	setEnvVariables(readDotEnv(filterDotEnv(readCWD())))
 }
+
+// func main() {
+// 	for key, value := range readDotEnv(filterDotEnv(readCWD())) {
+// 		setEnvVariable(key, value)
+// 		log.Printf("os.Getenv(%v) = value(%v)", os.Getenv(key), value)
+// 	}
+// }
