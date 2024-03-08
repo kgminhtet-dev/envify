@@ -38,6 +38,7 @@ func splitToKeyValue(line string) (string, string) {
 }
 
 func getKeyValuePair(file *os.File) ([]string, []string) {
+	defer file.Close()
 	key, value := "", ""
 	keys, values := make([]string, 0), make([]string, 0)
 	envReader := bufio.NewReader(file)
@@ -64,13 +65,24 @@ func readDotEnv(files []fs.DirEntry) map[string]string {
 		if err != nil {
 			log.Fatalf("can't read file %s, error %s", file.Name(), err)
 		}
-		defer envFile.Close()
 		keys, values := getKeyValuePair(envFile)
 		for i, key := range keys {
 			result[key] = values[i]
 		}
 	}
 	return result
+}
+
+func setEnvVariables(pairs map[string]string) {
+	for key, value := range pairs {
+		setEnvVariable(key, value)
+	}
+}
+
+func setEnvVariable(key, value string) {
+	if err := os.Setenv(key, value); err != nil {
+		log.Fatalf("error occured in setting environment variable %s", err)
+	}
 }
 
 func main() {
