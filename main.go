@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"strings"
 )
 
 func readCWD() []fs.DirEntry {
@@ -18,8 +19,18 @@ func readCWD() []fs.DirEntry {
 	return files
 }
 
+func filterDotEnv(files []fs.DirEntry) []fs.DirEntry {
+	dotEnvFiles := make([]fs.DirEntry, 0)
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), ".env") {
+			dotEnvFiles = append(dotEnvFiles, file)
+		}
+	}
+	return dotEnvFiles
+}
+
 func main() {
-	for _, file := range readCWD() {
+	for _, file := range filterDotEnv(readCWD()) {
 		log.Println(file.Name())
 	}
 }
