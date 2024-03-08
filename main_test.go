@@ -8,7 +8,7 @@ import (
 func TestEnvVaraibles(t *testing.T) {
 	testcases := map[string]string{
 		"USER":     "me",
-		"HOST":     "lcalhost",
+		"HOST":     "localhost",
 		"DNAME":    "you",
 		"PASSWORD": "1234567",
 		"PNAME":    "I",

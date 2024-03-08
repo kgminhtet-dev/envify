@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"io/fs"
@@ -32,9 +33,9 @@ func filterDotEnv(files []fs.DirEntry) []fs.DirEntry {
 	return dotEnvFiles
 }
 
-func splitToKeyValue(line string) (string, string) {
-	pair := strings.Split(line, "=")
-	return pair[0], pair[1]
+func splitToKeyValue(line []byte) (string, string) {
+	pair := bytes.Split(line, []byte("="))
+	return string(pair[0]), string(pair[1])
 }
 
 func getKeyValuePair(file *os.File) ([]string, []string) {
@@ -43,11 +44,9 @@ func getKeyValuePair(file *os.File) ([]string, []string) {
 	keys, values := make([]string, 0), make([]string, 0)
 	envReader := bufio.NewReader(file)
 	for {
-		line, err := envReader.ReadString('\n')
+		line, _, err := envReader.ReadLine()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				key, value = splitToKeyValue(line)
-				keys, values = append(keys, key), append(values, value)
 				break
 			}
 			log.Fatalf("error reading file %s, error %s", file.Name(), err)
@@ -87,6 +86,7 @@ func setEnvVariable(key, value string) {
 
 func main() {
 	for key, value := range readDotEnv(filterDotEnv(readCWD())) {
-		log.Printf("key: %s, value: %s\n", key, value)
+		setEnvVariable(key, value)
+		log.Printf("os.Getenv(%v) = value(%v)", os.Getenv(key), value)
 	}
 }
