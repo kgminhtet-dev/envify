@@ -32,9 +32,29 @@ func filterDotEnv(files []fs.DirEntry) []fs.DirEntry {
 	return dotEnvFiles
 }
 
-func getKeyValue(line string) (string, string) {
+func splitToKeyValue(line string) (string, string) {
 	pair := strings.Split(line, "=")
 	return pair[0], pair[1]
+}
+
+func getKeyValuePair(file *os.File) ([]string, []string) {
+	key, value := "", ""
+	keys, values := make([]string, 0), make([]string, 0)
+	envReader := bufio.NewReader(file)
+	for {
+		line, err := envReader.ReadString('\n')
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				key, value = splitToKeyValue(line)
+				keys, values = append(keys, key), append(values, value)
+				break
+			}
+			log.Fatalf("error reading file %s, error %s", file.Name(), err)
+		}
+		key, value = splitToKeyValue(line)
+		keys, values = append(keys, key), append(values, value)
+	}
+	return keys, values
 }
 
 func readDotEnv(files []fs.DirEntry) map[string]string {
@@ -45,19 +65,9 @@ func readDotEnv(files []fs.DirEntry) map[string]string {
 			log.Fatalf("can't read file %s, error %s", file.Name(), err)
 		}
 		defer envFile.Close()
-		envReader := bufio.NewReader(envFile)
-		for {
-			line, err := envReader.ReadString('\n')
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					key, value := getKeyValue(line)
-					result[key] = value
-					break
-				}
-				log.Fatalf("error reading file %s, error %s", file.Name(), err)
-			}
-			key, value := getKeyValue(line)
-			result[key] = value
+		keys, values := getKeyValuePair(envFile)
+		for i, key := range keys {
+			result[key] = values[i]
 		}
 	}
 	return result
