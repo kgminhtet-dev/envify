@@ -38,6 +38,14 @@ func splitToKeyValue(line []byte) (string, string) {
 	return string(pair[0]), string(pair[1])
 }
 
+func isCommand(line []byte) bool {
+	return bytes.HasPrefix(line, []byte("#"))
+}
+
+func isBlink(line []byte) bool {
+	return len(line) == 0
+}
+
 func getKeyValuePair(file *os.File) ([]string, []string) {
 	defer file.Close()
 	key, value := "", ""
@@ -51,8 +59,10 @@ func getKeyValuePair(file *os.File) ([]string, []string) {
 			}
 			log.Fatalf("error reading file %s, error %s", file.Name(), err)
 		}
-		key, value = splitToKeyValue(line)
-		keys, values = append(keys, key), append(values, value)
+		if !isBlink(line) && !isCommand(line) {
+			key, value = splitToKeyValue(line)
+			keys, values = append(keys, key), append(values, value)
+		}
 	}
 	return keys, values
 }

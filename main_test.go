@@ -12,6 +12,7 @@ func TestEnvVaraibles(t *testing.T) {
 		"DNAME":    "you",
 		"PASSWORD": "1234567",
 		"PNAME":    "I",
+		"PHOST":    "localhost",
 	}
 	setEnvVariables(readDotEnv(filterDotEnv(readCWD())))
 	for key, value := range testcases {
