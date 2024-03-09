@@ -18,6 +18,7 @@ type Text interface {
 
 const (
 	COMMENTPREFIX = "#"
+	SEPARATOR     = "="
 )
 
 func readCWD() []fs.DirEntry {
@@ -48,7 +49,10 @@ func validKey(key []byte) bool {
 }
 
 func splitToKeyValue(line []byte) (string, string) {
-	pair := bytes.Split(line, []byte("="))
+	pair := bytes.Split(line, []byte(SEPARATOR))
+	if len(pair) <= 1 {
+		return "", ""
+	}
 	key, value := pair[0], pair[1]
 	if !validKey(key) {
 		log.Fatalf("%s is not valid key for environment variable. Variable names must consist solely of letters, digits, and the underscore ( _ ) and must not begin with a digit.", key)
