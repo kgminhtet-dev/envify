@@ -13,13 +13,14 @@ func TestEnvVaraibles(t *testing.T) {
 		"PASSWORD": "1234567",
 		"PNAME":    "I",
 		"PHOST":    "localhost",
+		"EMPYT":    "",
 	}
 	setEnvVariables(readDotEnv(filterDotEnv(readCWD())))
 	for key, value := range testcases {
 		t.Log(key)
 		result := os.Getenv(key)
 		if result != value {
-			t.Log("vaule", value, "result", result, "\n")
+			t.Logf("vaule %q, result %q\n", value, result)
 		}
 	}
 }

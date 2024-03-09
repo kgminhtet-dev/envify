@@ -8,7 +8,16 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"regexp"
 	"strings"
+)
+
+type Text interface {
+	[]byte | string
+}
+
+const (
+	COMMENTPREFIX = "#"
 )
 
 func readCWD() []fs.DirEntry {
@@ -33,16 +42,33 @@ func filterDotEnv(files []fs.DirEntry) []fs.DirEntry {
 	return dotEnvFiles
 }
 
+func validKey(key []byte) bool {
+	reg := regexp.MustCompile("^[a-zA-Z_]+[a-zA-Z0-9_]*$")
+	return reg.Match(key)
+}
+
 func splitToKeyValue(line []byte) (string, string) {
 	pair := bytes.Split(line, []byte("="))
-	return string(pair[0]), string(pair[1])
+	key, value := pair[0], pair[1]
+	if !validKey(key) {
+		log.Fatalf("%s is not valid key for environment variable. Variable names must consist solely of letters, digits, and the underscore ( _ ) and must not begin with a digit.", key)
+	}
+	return string(bytes.Trim(key, " ")), string(bytes.Trim(removeCommant(value), " "))
 }
 
-func isCommand(line []byte) bool {
-	return bytes.HasPrefix(line, []byte("#"))
+func removeCommant(line []byte) []byte {
+	locCommentPrefix := bytes.Index(line, []byte(COMMENTPREFIX))
+	if locCommentPrefix == -1 {
+		return line
+	}
+	return line[:locCommentPrefix]
 }
 
-func isBlink(line []byte) bool {
+func isCommant(line []byte) bool {
+	return bytes.HasPrefix(line, []byte(COMMENTPREFIX))
+}
+
+func isEmpty[T Text](line T) bool {
 	return len(line) == 0
 }
 
@@ -59,9 +85,11 @@ func getKeyValuePair(file *os.File) ([]string, []string) {
 			}
 			log.Fatalf("error reading file %s, error %s", file.Name(), err)
 		}
-		if !isBlink(line) && !isCommand(line) {
+		if !isEmpty(line) && !isCommant(line) {
 			key, value = splitToKeyValue(line)
-			keys, values = append(keys, key), append(values, value)
+			if !isEmpty(key) && !isEmpty(value) {
+				keys, values = append(keys, key), append(values, value)
+			}
 		}
 	}
 	return keys, values
@@ -97,10 +125,3 @@ func setEnvVariable(key, value string) {
 func Load() {
 	setEnvVariables(readDotEnv(filterDotEnv(readCWD())))
 }
-
-// func main() {
-// 	for key, value := range readDotEnv(filterDotEnv(readCWD())) {
-// 		setEnvVariable(key, value)
-// 		log.Printf("os.Getenv(%v) = value(%v)", os.Getenv(key), value)
-// 	}
-// }
